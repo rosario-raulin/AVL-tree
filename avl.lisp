@@ -5,8 +5,6 @@
    :avl-find
    :avl-insert))
 
-(declaim (optimize debug))
-
 (in-package :rosario-raulin-de-avl)
 
 (defstruct (avl-node (:constructor make-avl-node (key value)))
