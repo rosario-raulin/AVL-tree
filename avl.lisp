@@ -5,6 +5,8 @@
    :avl-find
    :avl-insert))
 
+(declaim (optimize debug))
+
 (in-package :rosario-raulin-de-avl)
 
 (defstruct (avl-node (:constructor make-avl-node (key value)))
@@ -64,23 +66,74 @@
 	    (setf left (rotate-left left)))
        (rotate-right node)))))
 
-(defun avl-insert-node (node key value compare-fn)
+(defun avl-modify-node (null-value zerop-fn node key value compare-fn)
   (if (null node)
-      (make-avl-node key value)
+      null-value
       (let ((cmp (funcall compare-fn key (avl-node-key node))))
 	(with-accessors ((left avl-node-left) (right avl-node-right)) node
-	  (cond ((zerop cmp) (setf (avl-node-value node) value))
-		((< cmp 0)
-		 (setf left (avl-insert-node left key value compare-fn)
-		       node (rebalance node)
-		       (avl-node-height node) (new-height node)))
-		((> cmp 0)
-		 (setf right (avl-insert-node right key value compare-fn)
-		       node (rebalance node)
-		       (avl-node-height node) (new-height node)))))
+	  (cond
+	    ((zerop cmp)
+	     (setf node (funcall zerop-fn node value left right compare-fn)))
+	    ((< cmp 0)
+	     (setf left (avl-modify-node
+			 null-value zerop-fn left key value compare-fn)))
+	    (t (setf right (avl-modify-node
+			    null-value zerop-fn right key value compare-fn))))
+	  (unless (zerop cmp)
+	    (setf node (rebalance node)
+		  (avl-node-height node) (new-height node))))
 	node)))
+
+(defun avl-insert-node (node key value compare-fn)
+  (avl-modify-node
+   (make-avl-node key value)
+   (lambda (node value left right compare-fn)
+     (declare (ignore left right compare-fn))
+     (setf (avl-node-value node) value))
+   node key value compare-fn))
 
 (defun avl-insert (tree key value)
   (setf
    (avl-tree-head tree)
    (avl-insert-node (avl-tree-head tree) key value (avl-tree-compare-fn tree))))
+
+(defun leaf-p (node)
+  (not (or (avl-node-left node) (avl-node-right node))))
+
+(defun xor (a b)
+  (or (and a (not b)) (and (not a) b)))
+
+(defun half-leaf-p (node)
+  (xor (avl-node-left node) (avl-node-right node)))
+
+(defun find-replacement (node compare-fn)
+  (labels ((find-it (curr parent)
+	     (cond ((null (avl-node-left curr))
+		    (avl-remove-node node (avl-node-key curr) compare-fn)
+		    (if (eq parent node)
+			(setf (avl-node-right parent) nil)
+			(setf (avl-node-left parent) nil))
+		    curr)
+		   (t (find-it (avl-node-left curr) curr)))))
+    (find-it (avl-node-right node) node)))
+
+(defun remove-node (node compare-fn &optional left right)
+  (cond ((leaf-p node) nil)
+	((half-leaf-p node) (or left right))
+	(t (let ((rep (find-replacement node compare-fn)))
+	     (setf (avl-node-left rep) left
+		   (avl-node-right rep) (unless (eq rep right) right)
+		   (avl-node-height rep) (new-height rep))
+	     rep))))
+
+(defun avl-remove-node (node key compare-fn)
+  (avl-modify-node
+   nil
+   (lambda (node value left right compare-fn)
+     (declare (ignore value))
+     (remove-node node compare-fn left right))
+   node key nil compare-fn))
+
+(defun avl-remove (tree key)
+  (setf (avl-tree-head tree)
+	(avl-remove-node (avl-tree-head tree) key (avl-tree-compare-fn tree))))
