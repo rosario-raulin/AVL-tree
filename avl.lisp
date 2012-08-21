@@ -7,9 +7,8 @@
 
 (in-package :rosario-raulin-de-avl)
 
-(defstruct (avl-node (:constructor make-avl-node
-			 (key value &key left right (height 1))))
-  key value left right height)
+(defstruct (avl-node (:constructor make-avl-node (key value)))
+  key value left right (height 1))
 
 (defstruct (avl-tree (:constructor make-avl-tree (compare-fn)))
   head compare-fn)
