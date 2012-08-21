@@ -3,7 +3,8 @@
   (:export
    :make-avl-tree
    :avl-find
-   :avl-insert))
+   :avl-insert
+   :avl-remove))
 
 (in-package :rosario-raulin-de-avl)
 
