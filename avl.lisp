@@ -116,7 +116,7 @@
 		   (t (find-it (avl-node-left curr) curr)))))
     (find-it (avl-node-right node) node)))
 
-(defun remove-node (node compare-fn &optional left right)
+(defun remove-node (node compare-fn left right)
   (cond ((leaf-p node) nil)
 	((half-leaf-p node) (or left right))
 	(t (let ((rep (find-replacement node compare-fn)))
