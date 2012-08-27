@@ -30,5 +30,4 @@
 	(remhash i ht)
 	(avl-remove tree i))
       (content-alike ht tree)
-      (mapc (lambda (key) (assert (not (avl-find tree key)))) deleted)
-      (rosario-raulin-de-avl::avl-node-height (rosario-raulin-de-avl::avl-tree-head tree)))))
+      (mapc (lambda (key) (assert (not (avl-find tree key)))) deleted))))
