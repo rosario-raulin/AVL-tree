@@ -20,8 +20,7 @@
   (maphash (lambda (k v) (assert (= (avl-find tree k) v))) ht))
 
 (defun avl-test-insert (size)
-  (multiple-value-bind (ht tree) (fill-table-and-tree size)
-    (content-alike ht tree)))
+  (multiple-value-call #'content-alike (fill-table-and-tree size)))
 
 (defun avl-test-remove (size)
   (multiple-value-bind (ht tree) (fill-table-and-tree size)
@@ -31,4 +30,5 @@
 	(remhash i ht)
 	(avl-remove tree i))
       (content-alike ht tree)
-      (mapc (lambda (key) (assert (not (avl-find tree key)))) deleted))))
+      (mapc (lambda (key) (assert (not (avl-find tree key)))) deleted)
+      (rosario-raulin-de-avl::avl-node-height (rosario-raulin-de-avl::avl-tree-head tree)))))
